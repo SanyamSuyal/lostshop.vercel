@@ -1,28 +1,18 @@
 #!/bin/bash
 
-# Railway deployment helper script
+# Railway Deployment Script
 
-# Install Railway CLI if not already installed
-if ! command -v railway &> /dev/null; then
-    echo "Installing Railway CLI..."
-    npm i -g @railway/cli
-fi
+# Build the client
+echo "Building client..."
+export VITE_CWD=$(pwd)/client
+npx vite build
 
-# Login to Railway (if not already logged in)
-railway login
+# Build the server
+echo "Building server..."
+npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
-# Link to the Railway project (if not already linked)
-if [ ! -f .railway/config.json ]; then
-    echo "Linking to Railway project..."
-    railway link
-fi
+# Push schema to database
+echo "Pushing database schema..."
+npm run db:push
 
-# Deploy the project
-echo "Deploying to Railway..."
-railway up
-
-# Show the project status
-echo "Project status:"
-railway status
-
-echo "Deployment complete! Visit your project in the Railway dashboard: https://railway.app/dashboard"
+echo "Build complete! Your app is ready for Railway deployment."

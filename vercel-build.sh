@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# Build the client side with Vite
-echo "Building client..."
-vite build --outDir dist/public
+# Create build directories
+echo "Creating build directories..."
+mkdir -p dist/public
 
-# Build the server with esbuild
+# Build the client
+echo "Building client..."
+export VITE_CWD=$(pwd)/client
+npx vite build
+
+# Build the server
 echo "Building server..."
-esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+npx esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
 
 echo "Build complete!"
