@@ -1,24 +1,11 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "vercel-entrypoint.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "buildCommand": "node vercel-build.js",
-        "distDir": "dist/public"
-      }
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/vercel-entrypoint.js" },
-    { "src": "/health", "dest": "/vercel-entrypoint.js" },
-    { "src": "/(assets|scripts|fonts|css)/.*", "dest": "/$1/$2" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/health", "destination": "/api" }
   ],
   "env": {
     "NODE_ENV": "production"

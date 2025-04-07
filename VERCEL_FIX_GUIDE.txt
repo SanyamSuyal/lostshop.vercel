@@ -1,0 +1,62 @@
+# Vercel Deployment Fix Guide
+
+## Database Connection Fix
+
+The images you shared show issues with database connection in Vercel. Here's how to fix them:
+
+1. Use the new database configuration from server/database-config.ts:
+   - This automatically handles SSL configuration for Neon databases in Vercel environment
+   - Prevents connection errors by ensuring the correct format is used
+
+2. Update server/db.ts to use the new configuration:
+   ```typescript
+   import { initializeDatabase } from './database-config';
+   
+   const { pool, db } = initializeDatabase();
+   
+   export { pool, db };
+   ```
+
+3. Test database connectivity with the enhanced health check:
+   - Visit https://your-app-url.vercel.app/health
+   - Look for the database connection status in the response
+
+## Environment Variables
+
+Make sure the following environment variables are properly set in Vercel:
+
+1. DATABASE_URL:
+   - For Neon: postgres://username:password@hostname:port/database?sslmode=require
+   - The SSL mode parameter is critical for Vercel serverless functions
+
+2. SESSION_SECRET:
+   - Set a strong, random string for session security
+
+3. MAIN_LTC_ADDRESS:
+   - Your Litecoin wallet address for receiving payments
+
+## Deployment Steps
+
+1. Commit and push the new code to your repository
+2. Import the project on Vercel if not already imported
+3. Set the build command to: npm run build
+4. Set the output directory to: dist/public
+5. Configure the environment variables
+6. Deploy the application
+
+## Verifying Deployment
+
+1. After deployment completes, visit the health endpoint:
+   - https://your-app-url.vercel.app/health
+
+2. This will show detailed status information:
+   - Database connectivity
+   - Environment configuration
+   - Application readiness
+
+## If Issues Persist
+
+1. Check the Vercel deployment logs for specific error messages
+2. Verify DATABASE_URL format exactly matches the expected format (with sslmode=require)
+3. Make sure all dependencies are properly configured in package.json.vercel
+4. Try redeploying after confirming all settings are correct

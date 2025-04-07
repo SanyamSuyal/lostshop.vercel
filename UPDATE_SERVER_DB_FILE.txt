@@ -1,0 +1,20 @@
+# How to Update the Database Connection
+
+Replace the contents of server/db.ts with:
+
+```typescript
+import { initializeDatabase } from './database-config';
+
+// Initialize database with proper configuration for the current environment
+// This handles SSL properly for Vercel deployments
+const { pool, db } = initializeDatabase();
+
+// Export both the raw pool for health checks and the Drizzle ORM instance
+export { pool, db };
+```
+
+This change:
+1. Uses the new configuration utility that manages connection strings
+2. Ensures proper SSL configuration for Neon on Vercel
+3. Provides better error handling for database connections
+4. Enables detailed health checks for troubleshooting
