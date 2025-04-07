@@ -1,19 +1,19 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node",
-      "config": {
-        "buildCommand": "cd client && npx vite build --outDir ../dist/public && cd .. && npx esbuild server/index.ts --format=esm --platform=node --bundle --outdir=dist --external:express --external:pg",
-        "outputDirectory": "dist"
-      }
+  "buildCommand": "cd client && npx vite build --outDir ../dist/public && cd .. && npx esbuild server/index.ts --format=esm --platform=node --bundle --outdir=dist --external:express --external:pg",
+  "outputDirectory": "dist",
+  "framework": null,
+  "functions": {
+    "api/index.js": {
+      "memory": 1024,
+      "maxDuration": 10
     }
-  ],
+  },
   "routes": [
-    { "src": "/api/(.*)", "dest": "/dist/index.js" },
-    { "src": "/health", "dest": "/dist/index.js" },
-    { "src": "/(.*)", "dest": "/dist/public/$1" }
+    { "src": "/api/(.*)", "dest": "/api" },
+    { "src": "/health", "dest": "/api" },
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/public/$1" }
   ],
   "env": {
     "NODE_ENV": "production"
