@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "./vercel.sh",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "regions": ["bom1"],
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.js" }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "VERCEL": "1"
+  }
+}

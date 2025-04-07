@@ -1,0 +1,57 @@
+# Fixing the "Could not resolve entry module 'client/index.html'" Error
+
+If you're encountering the build error "Could not resolve entry module 'client/index.html'" during Vercel deployment, follow these steps:
+
+## The Problem
+
+This error occurs because Vite can't find the entry HTML file for your application. This typically happens because:
+
+1. The build command is being executed from the wrong directory
+2. The vercel.json configuration isn't properly set up for a monorepo structure (backend + frontend)
+
+## The Solution
+
+We've updated the `vercel.json` file to use a custom build command that explicitly:
+
+1. Changes to the client directory before running the Vite build
+2. Sets the correct output directory for the frontend files
+3. Builds the server code separately
+
+```json
+{
+  "version": 2,
+  "buildCommand": "cd client && vite build --outDir ../dist/public && cd .. && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/index.js"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.js"
+    }
+  ]
+}
+```
+
+## Required Environment Variables
+
+Make sure you set these environment variables in your Vercel project:
+
+1. `DATABASE_URL` - Your PostgreSQL connection string
+2. `SESSION_SECRET` - A secure random string for session encryption
+3. `NODE_ENV` - Set to "production"
+4. Any other secrets your app requires (MAIN_LTC_ADDRESS, etc.)
+
+## Deploying with the Fix
+
+1. Commit and push these changes to your repository
+2. Deploy again on Vercel
+3. Check the build logs to make sure there are no more errors
+
+If you still encounter issues, consider using the Railway deployment option instead, which might be better suited for full-stack applications.

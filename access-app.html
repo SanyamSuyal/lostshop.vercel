@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access LostShop Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f7f7f7;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        code {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Access LostShop Application</h1>
+        <p>Click the link below to access your application:</p>
+        
+        <a href="https://a30b46a6-7fb6-4693-b8c1-390c75778fdd-00-1t7rlyu4homjl.pike.replit.dev" class="button" target="_blank">Open Application</a>
+        
+        <h2>Alternative Methods</h2>
+        
+        <h3>1. Direct URL Access</h3>
+        <p>Try accessing the application using these URLs:</p>
+        <ul>
+            <li><a href="https://a30b46a6-7fb6-4693-b8c1-390c75778fdd-00-1t7rlyu4homjl.pike.replit.dev" target="_blank">https://a30b46a6-7fb6-4693-b8c1-390c75778fdd-00-1t7rlyu4homjl.pike.replit.dev</a></li>
+            <li><a href="https://workspace.factguru1981.repl.co" target="_blank">https://workspace.factguru1981.repl.co</a></li>
+        </ul>
+        
+        <h3>2. Use localhost with port 5000</h3>
+        <p>If you're running the application locally, try:</p>
+        <code>http://localhost:5000</code>
+        
+        <h3>3. Try Direct API Access</h3>
+        <p>Test if the API is working:</p>
+        <code id="apiTest"></code>
+        <button onclick="testAPI()">Test API Connection</button>
+        
+        <div id="result" style="margin-top: 10px;"></div>
+    </div>
+
+    <script>
+        function testAPI() {
+            document.getElementById('result').innerHTML = "Testing API connection...";
+            
+            fetch('https://a30b46a6-7fb6-4693-b8c1-390c75778fdd-00-1t7rlyu4homjl.pike.replit.dev/api/products')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('result').innerHTML = 
+                        "API connection successful! <br>Response: " + 
+                        JSON.stringify(data).substring(0, 100) + "...";
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = 
+                        "API connection failed: " + error.message;
+                    
+                    // Try the second URL
+                    fetch('https://workspace.factguru1981.repl.co/api/products')
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Second URL failed too: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            document.getElementById('result').innerHTML = 
+                                "Second URL API connection successful! <br>Response: " + 
+                                JSON.stringify(data).substring(0, 100) + "...";
+                        })
+                        .catch(error2 => {
+                            document.getElementById('result').innerHTML += 
+                                "<br>Second URL also failed: " + error2.message;
+                        });
+                });
+        }
+    </script>
+</body>
+</html>

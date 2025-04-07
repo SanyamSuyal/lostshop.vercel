@@ -1,0 +1,48 @@
+# Vercel Deployment Guide for Your Full-Stack Application
+
+## 404 Error - What's Happening
+
+The 404 error (NOT_FOUND) you're seeing is because Vercel can't correctly route the requests to your server and static files. This happens because your application is a full-stack app with both a Node.js backend and a Vite/React frontend.
+
+## Deployment Solution
+
+I've updated your vercel.json configuration to handle this. The key changes include:
+
+1. Using separate build configurations for client and server
+2. Setting up proper routing for static assets
+3. Ensuring API requests are properly directed to the server
+
+## Required Environment Variables
+
+Make sure to set these in your Vercel project dashboard:
+
+1. DATABASE_URL - Must be formatted as: `postgres://username:password@hostname:port/database?sslmode=require`
+2. SESSION_SECRET - A secure random string for session encryption
+3. NODE_ENV - Set to "production"
+4. VERCEL - Set to "1"
+
+## Deployment Checklist
+
+1. Push these changes to your Git repository
+2. Create a new deployment in Vercel
+3. Connect to your repository
+4. Set all required environment variables
+5. Deploy
+
+## Alternative (If Vercel Still Doesn't Work)
+
+Consider using Railway.app which has better support for full-stack Node.js apps:
+
+1. Sign up for Railway
+2. Create a new project
+3. Connect to your Git repository
+4. Add a PostgreSQL database
+5. Set the same environment variables
+6. Deploy
+
+## Testing The Deployment
+
+After deployment, verify these work:
+- Frontend routes (/, /dashboard, etc.)
+- API endpoints (/api/user, etc.)
+- Database connections
