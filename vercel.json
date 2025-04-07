@@ -1,11 +1,19 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist/public",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/health", "destination": "/api" }
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "buildCommand": "cd client && npx vite build --outDir ../dist/public && cd .. && npx esbuild server/index.ts --format=esm --platform=node --bundle --outdir=dist --external:express --external:pg",
+        "outputDirectory": "dist"
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/dist/index.js" },
+    { "src": "/health", "dest": "/dist/index.js" },
+    { "src": "/(.*)", "dest": "/dist/public/$1" }
   ],
   "env": {
     "NODE_ENV": "production"

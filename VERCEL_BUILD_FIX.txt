@@ -1,57 +1,104 @@
-# Fixing the "Could not resolve entry module 'client/index.html'" Error
+# Vercel Build Error Fix Guide
 
-If you're encountering the build error "Could not resolve entry module 'client/index.html'" during Vercel deployment, follow these steps:
+## Fixing the Two Critical Errors
 
-## The Problem
+This guide specifically addresses the following Vercel deployment errors:
 
-This error occurs because Vite can't find the entry HTML file for your application. This typically happens because:
+1. **Entry Module Resolution Error**
+   ```
+   Could not resolve entry module "client/index.html"
+   ```
 
-1. The build command is being executed from the wrong directory
-2. The vercel.json configuration isn't properly set up for a monorepo structure (backend + frontend)
+2. **Server Entry Point Error**
+   ```
+   The entry point "server/index.ts" cannot be marked as external
+   ```
 
-## The Solution
+## Solution Steps
 
-We've updated the `vercel.json` file to use a custom build command that explicitly:
+### 1. Update vercel.json
 
-1. Changes to the client directory before running the Vite build
-2. Sets the correct output directory for the frontend files
-3. Builds the server code separately
+Replace your current vercel.json with this version:
 
 ```json
 {
   "version": 2,
-  "buildCommand": "cd client && vite build --outDir ../dist/public && cd .. && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "routes": [
+  "builds": [
     {
-      "src": "/api/(.*)",
-      "dest": "/index.js"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.js"
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "buildCommand": "cd client && npx vite build --outDir ../dist/public && cd .. && npx esbuild server/index.ts --format=esm --platform=node --bundle --outdir=dist --external:express --external:pg",
+        "outputDirectory": "dist"
+      }
     }
-  ]
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/dist/index.js" },
+    { "src": "/health", "dest": "/dist/index.js" },
+    { "src": "/(.*)", "dest": "/dist/public/$1" }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
 ```
 
-## Required Environment Variables
+This configuration:
+- Builds the client and server separately
+- Specifies explicit externals to prevent the second error
+- Properly routes API requests to the server
 
-Make sure you set these environment variables in your Vercel project:
+### 2. Fix Database Connection
 
-1. `DATABASE_URL` - Your PostgreSQL connection string
-2. `SESSION_SECRET` - A secure random string for session encryption
-3. `NODE_ENV` - Set to "production"
-4. Any other secrets your app requires (MAIN_LTC_ADDRESS, etc.)
+Update your server/db.ts file to use the database-config.ts helper:
 
-## Deploying with the Fix
+```javascript
+import { neonConfig } from '@neondatabase/serverless';
+import ws from "ws";
+import { initializeDatabase } from './database-config';
 
-1. Commit and push these changes to your repository
-2. Deploy again on Vercel
-3. Check the build logs to make sure there are no more errors
+// Configure Neon for WebSockets
+neonConfig.webSocketConstructor = ws;
 
-If you still encounter issues, consider using the Railway deployment option instead, which might be better suited for full-stack applications.
+// Initialize database with proper configuration for the current environment
+const { pool, db } = initializeDatabase();
+
+// Export both the raw pool for health checks and the Drizzle ORM instance
+export { pool, db };
+```
+
+### 3. Environment Variables
+
+Ensure these environment variables are set in your Vercel project:
+
+- `DATABASE_URL` - Make sure it includes `?sslmode=require` for Neon PostgreSQL
+- `SESSION_SECRET` - A strong random string
+
+### 4. Run the Fix Scripts
+
+Before deploying, run:
+
+```
+node fix-vercel-deployment.js
+```
+
+This will:
+- Check and fix your environment setup
+- Create necessary serverless function entrypoints
+- Verify database connectivity
+
+### 5. Deploy to Vercel
+
+After these changes:
+
+1. Commit and push your changes to your repository
+2. Deploy through the Vercel dashboard or CLI
+
+## Troubleshooting
+
+If you still encounter issues:
+
+1. Check the Vercel build logs for specific errors
+2. Ensure DATABASE_URL is correctly formatted with SSL mode
+3. Try using the vercel-build.js script instead of the default build command
