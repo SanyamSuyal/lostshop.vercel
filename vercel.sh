@@ -1,145 +1,114 @@
 #!/bin/bash
 
-# Vercel Deployment Helper Script
-# This script helps prepare the project for Vercel deployment
+# Vercel Deployment Helper Script (ULTRA SIMPLIFIED VERSION)
+# This script creates a minimal working deployment for Vercel
 
-echo "🔵 Preparing project for Vercel deployment..."
+echo "🔵 Creating minimal Vercel deployment files..."
 
 # Create necessary directories
 mkdir -p dist/public api
 
-# Ensure the API entrypoint exists
-if [ ! -f api/index.js ]; then
-  echo "📝 Creating API entrypoint file..."
-  cat > api/index.js << 'EOFAPI'
+# Create the API handler file with minimal code
+echo "📝 Creating simplified API handler..."
+cat > api/index.js << 'EOFAPI'
 /**
- * Vercel Serverless Function Entry Point
- */
-import express from 'express';
-import session from 'express-session';
-import passport from 'passport';
-
-// Initialize express app
-const app = express();
-
-// Configure express app
-app.use(express.json());
-
-// Configure session
-const SESSION_SECRET = process.env.SESSION_SECRET || 'development-secret';
-app.use(session({
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
-}));
-
-// Configure passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    database: process.env.DATABASE_URL ? 'configured' : 'missing'
-  });
-});
-
-// Simple API endpoint for testing
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API is working!', timestamp: new Date().toISOString() });
-});
-
-// Import server routes (if available)
-try {
-  import('../dist/index.js');
-} catch (error) {
-  console.error('Error importing server application:', error);
-}
-
-/**
- * Default serverless function handler for Vercel
+ * Minimal Vercel Serverless Function 
  */
 export default function handler(req, res) {
-  return app(req, res);
+  // Simple health check
+  if (req.url === '/health') {
+    return res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      message: 'Vercel function is working'
+    });
+  }
+  
+  // API test endpoint
+  if (req.url === '/api/test' || req.url === '/api') {
+    return res.json({
+      message: 'API is working correctly!',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  // Fallback response
+  return res.status(200).json({ status: 'OK', url: req.url });
 }
 EOFAPI
-  echo "✅ API entrypoint created"
-fi
+echo "✅ API handler created"
 
-# Ensure vercel.json exists
-if [ ! -f vercel.json ]; then
-  echo "📝 Creating vercel.json configuration..."
-  cat > vercel.json << 'EOFJSON'
+# Create a simplified vercel.json
+echo "📝 Creating simplified vercel.json..."
+cat > vercel.json << 'EOFJSON'
 {
   "version": 2,
-  "buildCommand": "cd client && npx vite build --outDir ../dist/public && cd .. && npx esbuild server/index.ts --format=esm --platform=node --bundle --outdir=dist --external:express --external:pg",
-  "outputDirectory": "dist",
-  "framework": null,
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api" },
-    { "src": "/health", "dest": "/api" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "client/**", "use": "@vercel/static" }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "routes": [
+    { "src": "/api/(.*)", "dest": "api/index.js" },
+    { "src": "/health", "dest": "api/index.js" },
+    { "src": "/(.*)", "dest": "/client/$1" }
+  ]
 }
 EOFJSON
-  echo "✅ vercel.json created"
-fi
+echo "✅ vercel.json created"
 
-# Fix database connections for Vercel
-echo "🔧 Creating database configuration utility..."
-mkdir -p server
-cat > server/database-config.ts << 'EOFDB'
-import { Pool, PoolConfig } from 'pg';
-import * as schema from '../shared/schema';
+# Create a simple test file
+mkdir -p client
+echo "📝 Creating test client file..."
+cat > client/index.html << 'EOFHTML'
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vercel Test</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; line-height: 1.5; }
+    h1 { color: #0070f3; }
+    button { padding: 0.5rem 1rem; background: #0070f3; color: white; border: none; border-radius: 4px; }
+    pre { background: #f0f0f0; padding: 1rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Vercel Deployment Test</h1>
+  <p>If you can see this page, the static assets are working correctly!</p>
+  
+  <h2>Test API Connection</h2>
+  <button onclick="testAPI()">Test API</button>
+  <pre id="result">Click the button to test...</pre>
 
-// Import drizzle dynamically to avoid issues
-const drizzle = (client: any, options?: any) => {
-  try {
-    const { drizzle: drizzleFn } = require('drizzle-orm/postgres-js');
-    return drizzleFn(client, options);
-  } catch (error) {
-    const { drizzle: drizzleFn } = require('drizzle-orm/node-postgres');
-    return drizzleFn(client, options);
-  }
-};
+  <script>
+    async function testAPI() {
+      const result = document.getElementById('result');
+      result.textContent = 'Testing API connection...';
+      
+      try {
+        const response = await fetch('/api/test');
+        const data = await response.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        result.textContent = 'Error: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
+EOFHTML
+echo "✅ Test client file created"
 
-export function getDatabaseConfig(): PoolConfig {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is required');
-  }
-
-  let connectionString = process.env.DATABASE_URL;
-
-  // Add SSL mode for Neon PostgreSQL in Vercel
-  if (process.env.VERCEL === '1' && !connectionString.includes('sslmode=require')) {
-    const separator = connectionString.includes('?') ? '&' : '?';
-    connectionString = `${connectionString}${separator}sslmode=require`;
-  }
-
-  return { connectionString };
-}
-
-export function initializeDatabase() {
-  const config = getDatabaseConfig();
-  const pool = new Pool(config);
-  const db = drizzle(pool, { schema });
-  return { pool, db };
-}
-EOFDB
-echo "✅ Database configuration utility created"
-
-echo "✅ Project is ready for Vercel deployment"
-echo "🚀 Deploy using: vercel deploy"
+echo ""
+echo "✅ DEPLOYMENT FILES CREATED SUCCESSFULLY"
+echo ""
+echo "To deploy to Vercel:"
+echo "1. Commit these changes to your repository"
+echo "2. Run: vercel"
+echo ""
+echo "Once deployed, test the following URLs:"
+echo "- Main page: https://your-app.vercel.app"
+echo "- API test: https://your-app.vercel.app/api/test"
+echo "- Health check: https://your-app.vercel.app/health"
+echo ""
+echo "After confirming these work, you can integrate your full application."

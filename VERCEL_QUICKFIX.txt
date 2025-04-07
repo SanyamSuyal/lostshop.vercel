@@ -1,0 +1,82 @@
+# Vercel Quick Fix Guide
+
+## Fix for "The pattern "api/index.js" doesn't match any Serverless Functions" error
+
+Follow these steps to quickly fix your Vercel deployment:
+
+### Step 1: Update your vercel.json
+
+Replace your current vercel.json with this simplified version that uses builds:
+
+```
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.js", "use": "@vercel/node" },
+    { "src": "client/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/health", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/client/$1" }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
+```
+
+To do this, run:
+```
+cp vercel-simplified.json vercel.json
+```
+
+### Step 2: Ensure api/index.js exists and is correctly formatted
+
+Run:
+```
+ls -la api/
+```
+
+If it doesn't exist or is empty, create it with:
+```
+mkdir -p api
+```
+
+And add a minimal handler:
+```
+cat > api/index.js << 'EOT'
+export default function handler(req, res) {
+  return res.json({
+    status: 'ok',
+    message: 'API is working!',
+    timestamp: new Date().toISOString()
+  });
+}
+EOT
+```
+
+### Step 3: Run the vercel.sh script (optional)
+
+For a complete setup with test files:
+```
+./vercel.sh
+```
+
+### Step 4: Deploy to Vercel
+
+```
+vercel
+```
+
+### Step 5: Test the deployment
+
+After deployment, check these endpoints:
+- https://your-app.vercel.app/api/test
+- https://your-app.vercel.app/health
+
+Both should return JSON responses if working correctly.
+
+## Next Steps
+
+After fixing the deployment, integrate your full application by building client and server properly.
