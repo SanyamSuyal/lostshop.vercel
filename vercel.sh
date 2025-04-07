@@ -1,14 +1,21 @@
 #!/bin/bash
 
-# Vercel build script
-echo "Building client and server for Vercel deployment..."
+# Vercel Deployment Script
 
-# Build the client
-echo "Building client..."
-vite build
+# Copy package.json.vercel to package.json for Vercel deployment
+echo "Configuring package.json for Vercel..."
+cp package.json.vercel package.json
 
-# Build the server
-echo "Building server..."
-esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+# Make sure build script is executable
+chmod +x vercel-build.sh
 
-echo "Build complete!"
+# Commit the changes
+echo "Committing changes..."
+git add .
+git commit -m "Configure for Vercel deployment"
+
+# Deploy to Vercel
+echo "Deploying to Vercel..."
+vercel --prod
+
+echo "Deployment complete!"

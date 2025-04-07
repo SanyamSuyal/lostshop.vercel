@@ -1,15 +1,26 @@
 {
   "version": 2,
-  "buildCommand": "bash ./vercel-build.sh",
-  "outputDirectory": "dist",
-  "installCommand": "npm install",
-  "framework": null,
-  "regions": ["bom1"],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.js" }
+  "builds": [
+    {
+      "src": "vercel-entrypoint.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "node vercel-build.js",
+        "distDir": "dist/public"
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/vercel-entrypoint.js" },
+    { "src": "/health", "dest": "/vercel-entrypoint.js" },
+    { "src": "/(assets|scripts|fonts|css)/.*", "dest": "/$1/$2" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "VERCEL": "1"
+    "NODE_ENV": "production"
   }
 }

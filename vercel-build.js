@@ -14,10 +14,17 @@ if (!fs.existsSync('dist/public')) {
 // Build client
 console.log('Building client...');
 try {
+  // Set client directory as working directory
+  process.chdir('./client');
   execSync('npx vite build', {
     stdio: 'inherit',
-    env: { ...process.env }
+    env: { 
+      ...process.env,
+      VITE_CWD: path.resolve(process.cwd())
+    }
   });
+  // Return to root directory
+  process.chdir('..');
   console.log('Client build successful!');
 } catch (error) {
   console.error('Client build failed:', error);
