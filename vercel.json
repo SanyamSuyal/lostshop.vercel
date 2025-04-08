@@ -1,16 +1,13 @@
 {
   "version": 2,
+  "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "builds": [
-    { "src": "api/index.js", "use": "@vercel/node" },
-    { "src": "client/**", "use": "@vercel/static" }
-  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/health", "dest": "/api/index.js" },
-    { "src": "/(.*)", "dest": "/client/$1" },
-    { "src": "/", "dest": "/client/index.html" }
+    { "src": "/(.*)", "dest": "/dist/public/$1" },
+    { "src": "/", "dest": "/dist/public/index.html" }
   ],
   "env": {
     "NODE_ENV": "production"
