@@ -75,11 +75,11 @@ const path = require('path');
 const app = express();
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '../dist/public')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
 // The "catchall" handler
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
 module.exports = app;
@@ -89,6 +89,7 @@ module.exports = app;
   console.log('Created server/index.js successfully');
 }
 
+console.log('Checking for client directory...');
 // Ensure client directory exists with basic setup if needed
 if (!fs.existsSync('client')) {
   console.log('Client directory not found. Creating a minimal client setup...');
@@ -236,11 +237,8 @@ main {
   fs.writeFileSync('client/src/index.css', indexCss);
   
   console.log('Created minimal client application');
-}
-
-// Create dist/public directory if it doesn't exist
-if (!fs.existsSync('dist/public')) {
-  fs.mkdirSync('dist/public', { recursive: true });
+} else {
+  console.log('Client directory found! Using existing client code.');
 }
 
 // Run the build process step by step
@@ -255,6 +253,15 @@ async function runBuildSequence() {
     // Step 3: Change to client directory and install dependencies
     console.log('Installing client dependencies...');
     if (fs.existsSync('client')) {
+      // Force install of TailwindCSS if it's used
+      if (fs.existsSync('client/tailwind.config.js') || 
+          fs.existsSync('client/tailwind.config.cjs') || 
+          fs.existsSync('client/tailwind.config.ts')) {
+        
+        console.log('TailwindCSS configuration detected, ensuring it is installed...');
+        await executeCommand('cd client && npm install tailwindcss postcss autoprefixer');
+      }
+      
       // Try to build the client
       try {
         // Install dependencies
@@ -262,17 +269,40 @@ async function runBuildSequence() {
         
         // Build the client
         console.log('Building client...');
+        
+        // Check if TypeScript is used
+        const usesTypeScript = fs.existsSync('client/src/main.tsx') || 
+                             fs.existsSync('client/src/App.tsx');
+        
+        if (usesTypeScript) {
+          console.log('TypeScript detected, installing TypeScript...');
+          await executeCommand('cd client && npm install typescript @types/node @types/react @types/react-dom');
+        }
+        
         await executeCommand('cd client && npm run build');
         
-        // Copy client build to dist/public
+        // Copy client build to dist directory for API structure
         if (fs.existsSync('client/dist')) {
-          console.log('Copying client build to dist/public...');
+          console.log('Client build successful! Setting up for deployment...');
+          
+          // Ensure dist directory exists
+          if (!fs.existsSync('dist')) {
+            fs.mkdirSync('dist', { recursive: true });
+          }
+          
+          // Create a copy for API access
+          if (!fs.existsSync('dist/public')) {
+            fs.mkdirSync('dist/public', { recursive: true });
+          }
+          
           // Determine the correct copy command based on the OS
           if (process.platform === 'win32') {
             await executeCommand('xcopy /E /I /Y client\\dist\\* dist\\public\\');
           } else {
             await executeCommand('cp -r client/dist/* dist/public/');
           }
+          
+          console.log('Client files copied to dist/public for API access');
         } else {
           throw new Error('Client build directory not found');
         }
@@ -284,7 +314,7 @@ async function runBuildSequence() {
         createFallbackHtml();
       }
     } else {
-      console.warn('Client directory not found. Creating a minimal index.html...');
+      console.warn('Client directory not found after check. Creating a minimal index.html...');
       createFallbackHtml();
     }
     
