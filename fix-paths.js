@@ -14,6 +14,8 @@ function fixWindowsPaths() {
 
   files.forEach(file => {
     if (fs.existsSync(file)) {
+      console.log(`Fixing paths in ${file}...`);
+      
       let content = fs.readFileSync(file, 'utf8');
       
       // Replace Windows backslashes with forward slashes
@@ -24,6 +26,8 @@ function fixWindowsPaths() {
       
       fs.writeFileSync(file, content);
       console.log(`Fixed paths in ${file}`);
+    } else {
+      console.log(`File ${file} does not exist, skipping path fix`);
     }
   });
 }
