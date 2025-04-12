@@ -4,9 +4,10 @@
   "description": "LostShop e-commerce platform",
   "main": "index.js",
   "scripts": {
-    "start": "node server/index.js",
+    "start": "node dist/index.js",
     "dev": "nodemon server/index.js",
-    "build": "npm install && cd client && npm install && npm run build",
+    "build": "npm install && tsc && node esbuild.config.js && node fix-paths.js && cd client && npm install && npm run build && mkdir -p ../dist/public && cp -r dist/* ../dist/public/",
+    "vercel-build": "tsc && node esbuild.config.js && node fix-paths.js && cd client && npm install && npm run build && mkdir -p ../dist/public && cp -r dist/* ../dist/public/",
     "install-client": "cd client && npm install",
     "client": "cd client && npm run dev",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\""
@@ -22,10 +23,16 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.2.1",
     "nodemailer": "^6.9.13",
-    "stripe": "^14.20.0"
+    "stripe": "^14.20.0",
+    "nanoid": "^3.3.4"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "typescript": "^5.3.3",
+    "esbuild": "^0.19.11",
+    "esbuild-node-externals": "^1.11.0",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.19"
   }
 }
