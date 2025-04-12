@@ -7,7 +7,7 @@
     "start": "node dist/index.js",
     "dev": "nodemon server/index.js",
     "build": "npm install && node esbuild.config.js && node fix-paths.js && cd client && npm install && npm run build && mkdir -p ../dist/public && cp -r dist/* ../dist/public/",
-    "vercel-build": "node esbuild.config.js && node fix-paths.js && cd client && npm install && npm run build && mkdir -p ../dist/public && cp -r dist/* ../dist/public/",
+    "vercel-build": "node build-sequence.js",
     "install-client": "cd client && npm install",
     "client": "cd client && npm run dev",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\""

@@ -43,20 +43,20 @@ if (!fs.existsSync(path.join(__dirname, 'dist'))) {
 }
 
 // Build the server
-try {
-  esbuild.buildSync({
-    entryPoints: ['server/index.js'],
-    bundle: true,
-    platform: 'node',
-    target: 'node16',
-    outfile: 'dist/index.js',
-    format: 'cjs',
-    plugins: [nodeExternalsPlugin()],
-    minify: true,
-    sourcemap: true,
-  });
+// Use the async build method instead of buildSync because plugins require it
+esbuild.build({
+  entryPoints: ['server/index.js'],
+  bundle: true,
+  platform: 'node',
+  target: 'node16',
+  outfile: 'dist/index.js',
+  format: 'cjs',
+  plugins: [nodeExternalsPlugin()],
+  minify: true,
+  sourcemap: true,
+}).then(() => {
   console.log('Server build completed successfully');
-} catch (error) {
+}).catch(error => {
   console.error('Error building server:', error);
   process.exit(1);
-} 
+}); 
