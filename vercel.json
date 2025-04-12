@@ -19,12 +19,12 @@
       "dest": "vercel-entrypoint.js"
     },
     {
-      "src": "/(.*)",
-      "dest": "dist/public/$1"
+      "src": "/(.*\\.[^.]+)$",
+      "dest": "/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "dist/public/index.html"
+      "dest": "/index.html"
     }
   ]
 }
