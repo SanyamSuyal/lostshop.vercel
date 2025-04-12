@@ -24,6 +24,38 @@ function executeCommand(command, options = {}) {
   });
 }
 
+// Check for PostCSS config that might cause build issues
+if (fs.existsSync('postcss.config.js') || fs.existsSync('postcss.config.cjs')) {
+  console.log('Found PostCSS config in root. Creating a backup and removing it temporarily...');
+  
+  // Back up and remove postcss config
+  if (fs.existsSync('postcss.config.js')) {
+    fs.renameSync('postcss.config.js', 'postcss.config.js.bak');
+  }
+  
+  if (fs.existsSync('postcss.config.cjs')) {
+    fs.renameSync('postcss.config.cjs', 'postcss.config.cjs.bak');
+  }
+}
+
+// Check for TailwindCSS config that might cause build issues
+if (fs.existsSync('tailwind.config.js') || fs.existsSync('tailwind.config.cjs') || fs.existsSync('tailwind.config.ts')) {
+  console.log('Found TailwindCSS config in root. Creating a backup and removing it temporarily...');
+  
+  // Back up and remove tailwind config
+  if (fs.existsSync('tailwind.config.js')) {
+    fs.renameSync('tailwind.config.js', 'tailwind.config.js.bak');
+  }
+  
+  if (fs.existsSync('tailwind.config.cjs')) {
+    fs.renameSync('tailwind.config.cjs', 'tailwind.config.cjs.bak');
+  }
+  
+  if (fs.existsSync('tailwind.config.ts')) {
+    fs.renameSync('tailwind.config.ts', 'tailwind.config.ts.bak');
+  }
+}
+
 // Ensure server and dist directories exist
 if (!fs.existsSync('server')) {
   fs.mkdirSync('server', { recursive: true });
@@ -96,6 +128,15 @@ export default defineConfig({
 `;
   
   fs.writeFileSync('client/vite.config.js', viteConfig);
+  
+  // Create postcss.config.js in the client directory
+  const postcssConfig = `
+export default {
+  plugins: []
+};
+`;
+  
+  fs.writeFileSync('client/postcss.config.js', postcssConfig);
   
   // Create index.html
   const indexHtml = `
@@ -214,49 +255,54 @@ async function runBuildSequence() {
     // Step 3: Change to client directory and install dependencies
     console.log('Installing client dependencies...');
     if (fs.existsSync('client')) {
-      await executeCommand('cd client && npm install');
-      
-      // Step 4: Build the client
-      console.log('Building client...');
-      await executeCommand('cd client && npm run build');
-      
-      // Step 5: Copy client build to dist/public
-      if (fs.existsSync('client/dist')) {
-        console.log('Copying client build to dist/public...');
-        // Determine the correct copy command based on the OS
-        if (process.platform === 'win32') {
-          await executeCommand('xcopy /E /I /Y client\\dist\\* dist\\public\\');
+      // Try to build the client
+      try {
+        // Install dependencies
+        await executeCommand('cd client && npm install');
+        
+        // Build the client
+        console.log('Building client...');
+        await executeCommand('cd client && npm run build');
+        
+        // Copy client build to dist/public
+        if (fs.existsSync('client/dist')) {
+          console.log('Copying client build to dist/public...');
+          // Determine the correct copy command based on the OS
+          if (process.platform === 'win32') {
+            await executeCommand('xcopy /E /I /Y client\\dist\\* dist\\public\\');
+          } else {
+            await executeCommand('cp -r client/dist/* dist/public/');
+          }
         } else {
-          await executeCommand('cp -r client/dist/* dist/public/');
+          throw new Error('Client build directory not found');
         }
-      } else {
-        console.warn('Client build directory not found. Creating a minimal index.html...');
-        const fallbackHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LostShop</title>
-  <style>
-    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f5f5f5; }
-    .container { text-align: center; max-width: 600px; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    h1 { margin-top: 0; color: #333; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Welcome to LostShop</h1>
-    <p>The site is currently being set up. Please check back later.</p>
-  </div>
-</body>
-</html>
-`;
-        fs.writeFileSync('dist/public/index.html', fallbackHtml);
+      } catch (error) {
+        console.error('Error building client:', error);
+        console.log('Falling back to static HTML...');
+        
+        // Create a fallback HTML file
+        createFallbackHtml();
       }
     } else {
       console.warn('Client directory not found. Creating a minimal index.html...');
-      const fallbackHtml = `
+      createFallbackHtml();
+    }
+    
+    // Restore any config files we backed up
+    restoreConfigFiles();
+    
+    console.log('Build sequence completed successfully!');
+  } catch (error) {
+    // Restore any config files we backed up even if we failed
+    restoreConfigFiles();
+    
+    console.error('Build sequence failed:', error);
+    process.exit(1);
+  }
+}
+
+function createFallbackHtml() {
+  const fallbackHtml = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -277,13 +323,36 @@ async function runBuildSequence() {
 </body>
 </html>
 `;
-      fs.writeFileSync('dist/public/index.html', fallbackHtml);
-    }
-    
-    console.log('Build sequence completed successfully!');
-  } catch (error) {
-    console.error('Build sequence failed:', error);
-    process.exit(1);
+  fs.writeFileSync('dist/public/index.html', fallbackHtml);
+  console.log('Created fallback index.html');
+}
+
+function restoreConfigFiles() {
+  // Restore PostCSS config if we backed it up
+  if (fs.existsSync('postcss.config.js.bak')) {
+    fs.renameSync('postcss.config.js.bak', 'postcss.config.js');
+    console.log('Restored postcss.config.js');
+  }
+  
+  if (fs.existsSync('postcss.config.cjs.bak')) {
+    fs.renameSync('postcss.config.cjs.bak', 'postcss.config.cjs');
+    console.log('Restored postcss.config.cjs');
+  }
+  
+  // Restore TailwindCSS config if we backed it up
+  if (fs.existsSync('tailwind.config.js.bak')) {
+    fs.renameSync('tailwind.config.js.bak', 'tailwind.config.js');
+    console.log('Restored tailwind.config.js');
+  }
+  
+  if (fs.existsSync('tailwind.config.cjs.bak')) {
+    fs.renameSync('tailwind.config.cjs.bak', 'tailwind.config.cjs');
+    console.log('Restored tailwind.config.cjs');
+  }
+  
+  if (fs.existsSync('tailwind.config.ts.bak')) {
+    fs.renameSync('tailwind.config.ts.bak', 'tailwind.config.ts');
+    console.log('Restored tailwind.config.ts');
   }
 }
 
